@@ -157,6 +157,8 @@ func printHalves(file1 string, file2 string) {
 	fmt.Println("")
 }
 
+// This function will extract the contents of a line past the number, 
+// unless it starts with an 'X', which will be prepended to the line.
 func extractLineContents(s string) string {
 	result := ""
 	start := false
@@ -178,6 +180,7 @@ func extractLineContents(s string) string {
 func checkSimilar(line1 string, line2 string) bool {
 	len1 := len(line1)
 	len2 := len(line2)
+	// empty lines shouldn't match literally everything
 	if (len1 == 0 || len2 == 0) && len1 != len2 {
 		return false
 	}
