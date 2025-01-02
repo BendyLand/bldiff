@@ -1,3 +1,4 @@
+print("Hello world") # and this is a test
 def say_hi():
     print("Hi")
 

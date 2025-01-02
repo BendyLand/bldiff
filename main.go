@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/term"
 	"math"
 	"os"
 	"strings"
-	"golang.org/x/term"
 )
 
 func main() {
@@ -108,8 +108,9 @@ func normalizeFileLength(file string, maxWidth int, minLines int) string {
 		}
 		// this is for the line directly after the numbers
 		if i == len(lines)-1 {
-			temp := "X "
-			for len(temp) < maxWidth {
+			temp := "\033[31mX\033[0m "
+			// the color code is an extra 9 chars
+			for len(temp)-9 < maxWidth {
 				temp += " "
 			}
 			parts[i] = temp
@@ -117,8 +118,8 @@ func normalizeFileLength(file string, maxWidth int, minLines int) string {
 	}
 	// this is for the rest of the missing lines
 	for len(parts) < minLines {
-		temp := "X "
-		for len(temp) < maxWidth {
+		temp := "\033[31mX\033[0m "
+		for len(temp)-9 < maxWidth {
 			temp += " "
 		}
 		parts = append(parts, temp)
@@ -132,7 +133,60 @@ func printHalves(file1 string, file2 string) {
 	length := len(lines1) - 1
 	fmt.Println("")
 	for i := range length {
-		fmt.Printf("%s | %s\n", lines1[i], lines2[i])
+		temp1 := strings.Trim(extractLineContents(lines1[i]), " ")
+		temp2 := strings.Trim(extractLineContents(lines2[i]), " ")
+		extraLine := strings.Contains(temp1, "X") || strings.Contains(temp2, "X")
+		switch {
+		case temp1 == temp2:
+			colorPrint(lines1[i], "green")
+			colorPrint(" | ", "green")
+			colorPrint(lines2[i], "green")
+			fmt.Println("")
+		case checkSimilar(temp1, temp2) && !extraLine:
+			colorPrint(lines1[i], "yellow")
+			colorPrint(" | ", "yellow")
+			colorPrint(lines2[i], "yellow")
+			fmt.Println("")
+		default:
+			colorPrint(lines1[i], "red")
+			colorPrint(" | ", "red")
+			colorPrint(lines2[i], "red")
+			fmt.Println("")
+		}
 	}
 	fmt.Println("")
+}
+
+func extractLineContents(s string) string {
+	result := ""
+	start := false
+	for _, c := range s {
+		if !start && c == 'X' {
+			result += string('X')
+			continue
+		}
+		if start {
+			result += string(c)
+		}
+		if c == ' ' {
+			start = true
+		}
+	}
+	return result
+}
+
+func checkSimilar(line1 string, line2 string) bool {
+	len1 := len(line1)
+	len2 := len(line2)
+	if (len1 == 0 || len2 == 0) && len1 != len2 {
+		return false
+	}
+	switch {
+	case strings.Contains(line1, line2):
+		return true
+	case strings.Contains(line2, line1):
+		return true
+	default:
+		return false
+	}
 }
